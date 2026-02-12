@@ -26,16 +26,22 @@ public class MintRequestProducer implements Runnable {
     public void run() {
         for (int i = 0; i < requestCount; i++) {
             try {
+            	// 랜덤한 userId 생성 
                 String userId = "user-" + (int)(Math.random() * userPoolSize);
 
+                // 현재 금액 가져오기
                 var quote = priceFeed.getCurrentQuote();
 
+                // 요청 객체 생성
                 MintRequest request = new MintRequest( userId, quote.getPrice(), quote.getTimestamp());
 
+                // App.java의 BlockingQueue에 적재
                 queue.put(request);
+
+                // 요청자 횟수 증가
                 metrics.incProduced();
 
-            } catch (InterruptedException ignored) {}
+            } catch (InterruptedException ignored) { }
         }
     }
 }

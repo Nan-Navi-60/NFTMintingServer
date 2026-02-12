@@ -1,5 +1,6 @@
 package com.nftmint.service;
 
+// 금액 객체
 public class PriceQuote {
 	
 	private final long price;

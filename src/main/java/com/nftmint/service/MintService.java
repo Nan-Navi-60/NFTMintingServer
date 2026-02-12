@@ -16,11 +16,14 @@ public class MintService {
     	this.repository = repository; 
 	}
     
+    // mit 동작
     public MintResult mint(MintRequest request) {
 
+        // 현재 시간 체크
         long now = System.currentTimeMillis();
 
         // 가격 TTL 체크
+        // 현재 시간으로 부터 3초 초과하는 경우 에러 반환
         if (now - request.getQuotedAt() > QUOTE_TTL_MS) {
             throw new MintingException("PRICE_QUOTE_EXPIRED");
         }
