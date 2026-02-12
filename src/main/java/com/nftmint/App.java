@@ -1,12 +1,14 @@
 package com.nftmint;
 
 import com.nftmint.domain.MintRequest;
+import com.nftmint.metrics.Metrics;
 import com.nftmint.producer.MintRequestProducer;
 import com.nftmint.consumer.MintWorker;
 import com.nftmint.repo.MintRepository;
 import com.nftmint.service.*;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class App {
 
@@ -19,10 +21,11 @@ public class App {
         SupplyManager supplyManager = new SupplyManager(MAX_SUPPLY);
         MintRepository repository = new MintRepository();
         PriceFeed priceFeed = new PriceFeed();
-
+        AtomicBoolean stopSignal = new AtomicBoolean(false);
         MintService mintService = new MintService(supplyManager, repository);
-
-        priceFeed.start(); // 가격 변동 시작
+        Metrics metrics = new Metrics();
+        
+        priceFeed.start();
 
         int producerCount = 20;
         int workerCount = 8;
@@ -40,10 +43,22 @@ public class App {
         }
 
         for (int i = 0; i < workerCount; i++) {
-            workerPool.submit(new MintWorker(queue, mintService));
+            workerPool.submit(new MintWorker(queue, mintService, metrics, stopSignal));
         }
 
         producerPool.shutdown();
         producerPool.awaitTermination(1, TimeUnit.MINUTES);
+        
+        stopSignal.set(true);
+        
+        workerPool.shutdown();
+        if (!workerPool.awaitTermination(30, TimeUnit.SECONDS)) {
+            workerPool.shutdownNow();
+        }
+
+        System.out.println("Final Metrics: " + metrics);
+        System.out.println("Total Minted (Repo): " + repository.totalMintedUsers());
+        
+        System.exit(0);
     }
 }
