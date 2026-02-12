@@ -37,7 +37,7 @@ public class MintWorker implements Runnable {
 					continue;
 
 				metrics.incConsumed();
-				mintService.handle(req);
+				mintService.mint(req);
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 				return;
