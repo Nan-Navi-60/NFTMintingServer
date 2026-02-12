@@ -21,6 +21,7 @@ public class SupplyManager {
     }
 
     public MintDecision tryMint(String userId) {
+        // Thread Block
         lock.lock();
         try {
             // 이미 민팅한 유저인지 확인
@@ -48,6 +49,7 @@ public class SupplyManager {
             return MintDecision.ofSuccess(tokenId);
 
         } finally {
+            // Block 해제
             lock.unlock();
         }
     }
