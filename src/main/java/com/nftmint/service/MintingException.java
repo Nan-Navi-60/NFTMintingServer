@@ -8,7 +8,7 @@ public class MintingException extends RuntimeException {
         INVALID_REQUEST,
         CONCURRENCY_FAIL
     }
-
+    
     public MintingException(String message) {
         super(message);
         this.errorType = ErrorType.SYSTEM_ERROR;
