@@ -8,7 +8,7 @@
 ### 2.1. 파라미터
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| **MAX_SUPPLY** | 10,000개 | 최대 민팅 가능 수량 |
+| **MAX_SUPPLY** | 3000개 | 최대 민팅 가능 수량 |
 | **producerCount** | 20 | Producer 스레드 수 |
 | **workerCount** | 8 | Worker 스레드 수 |
 | **requestsPerProducer** | 1,000 | Producer당 생성 요청 수 (총 20,000건) |
@@ -16,9 +16,9 @@
 | **queueSize** | 5,000 | BlockingQueue 용량 |
 
 ### 2.2. 시나리오 설명
-- **NFT 공급 규모**: 최대 10,000개 한정판 NFT 발행
-- **요청 폭주 시뮬레이션**: 20개의 Producer 스레드가 각각 1,000건씩, 총 20,000건의 민팅 요청을 짧은 시간 내에 쏟아냄 (공급량의 200%)
-- **사용자 행위 모델링**: 전체 사용자 풀을 5,000명으로 제한. 20,000건의 요청이 5,000명에게서 발생하므로, 특정 사용자의 '연타' 및 '중복 요청'이 빈번하게 발생하는 상황을 재현
+- **NFT 공급 규모**: 최대 3000개 한정판 NFT 발행
+- **요청 폭주 시뮬레이션**: 20개의 Producer 스레드가 각각 1,000건씩, 총 20,000건의 민팅 요청을 짧은 시간 내에 쏟아냄
+- **사용자 행위 모델링**: 전체 사용자 풀을 5,000명으로 제한. 20,000건의 요청이 5,000명에게서 발생하므로, 특정 사용자의 '연타/중복 요청'이 빈번하게 발생하는 상황을 재현
 - **비즈니스 제약 조건**: 1인 1회 민팅만 허용
 
 ### 2.2. 
@@ -81,7 +81,7 @@
 | **BlockingQueue&lt;MintRequest&gt;** | 대기열에 들어온 민팅 요청 | BlockingQueue 사용 → put()/poll()로 producer-consumer 패턴 구현 |
 | **SupplyManager** | 남은 공급량·토큰 ID 발급·이미 민팅한 유저 집합 | ReentrantLock 사용 → tryMint() 메서드 전체를 임계 영역으로 보호, 단일 스레드만 성공 시 토큰 발급 |
 | **MintRepository** | userId별 민팅 결과 저장 | ConcurrentHashMap 사용 → putIfAbsent 등으로 동시 쓰기 안전 |
-| **Metrics**) | 요청/성공/거부 수치 집계 | AtomicLong, AtomicInteger 사용 |
+| **Metrics** | 요청/성공/거부 수치 집계 | AtomicLong, AtomicInteger 사용 |
 | **PriceFeed** | 현재 시세 | 백그라운드 스레드가 갱신, Worker는 읽기만 → 공유 읽기 허용 |
 | **stopSignal** | Producer 종료 후 Worker 종료 알림 | AtomicBoolean 사용 |
 
@@ -93,17 +93,19 @@
 ### 7.1 실행 중 로그
 ```
 - [MINTED] user=user-1234 tokenId=1 req=100000
-- [DUPLICATE] user=user-1234 req=100000
+- [SOLD_OUT] user=user-3266 req=1000
+- [DUPLICATE] user=user-3084 req=1000
 ```
 
 ### 7.2 최종 통계 출력
 ```
-- produced: 20000
-- consumed: 20000
-- success: 4892
-- rejected(soldOut): 0
-- rejected(duplicateUser): 4892
-- failed(unexpected): 0
+Final Metrics: Metrics
+- produced: 20000
+- consumed: 20000
+- success: 3000
+- rejected(soldOut): 6188
+- rejected(duplicateUser): 10812
+- failed(unexpected): 0
 ```
 
 ## 8. 프로젝트 구조
