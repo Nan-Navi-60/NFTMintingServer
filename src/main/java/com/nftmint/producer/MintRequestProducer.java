@@ -1,5 +1,37 @@
 package com.nftmint.producer;
 
-public class MintRequestProducer{
+import com.nftmint.domain.MintRequest;
+import com.nftmint.service.PriceFeed;
 
+import java.util.concurrent.BlockingQueue;
+
+public class MintRequestProducer implements Runnable {
+
+    private final BlockingQueue<MintRequest> queue;
+    private final PriceFeed priceFeed;
+    private final int requestCount;
+    private final int userPoolSize;
+
+    public MintRequestProducer(BlockingQueue<MintRequest> queue, PriceFeed priceFeed, int requestCount, int userPoolSize) {
+        this.queue = queue;
+        this.priceFeed = priceFeed;
+        this.requestCount = requestCount;
+        this.userPoolSize = userPoolSize;
+    }
+
+    @Override
+    public void run() {
+        for (int i = 0; i < requestCount; i++) {
+            try {
+                String userId = "user-" + (int)(Math.random() * userPoolSize);
+
+                var quote = priceFeed.getCurrentQuote();
+
+                MintRequest request = new MintRequest( userId, quote.getPrice(), quote.getTimestamp());
+
+                queue.put(request);
+
+            } catch (InterruptedException ignored) {}
+        }
+    }
 }
