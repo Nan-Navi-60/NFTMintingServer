@@ -1,6 +1,7 @@
 package com.nftmint;
 
 import com.nftmint.domain.MintRequest;
+import com.nftmint.log.AuditLogger;
 import com.nftmint.metrics.Metrics;
 import com.nftmint.producer.MintRequestProducer;
 import com.nftmint.consumer.MintWorker;
@@ -24,6 +25,7 @@ public class App {
         AtomicBoolean stopSignal = new AtomicBoolean(false);
         MintService mintService = new MintService(supplyManager, repository);
         Metrics metrics = new Metrics();
+        AuditLogger auditLogger = new AuditLogger();
         
         priceFeed.start();
 
@@ -37,13 +39,13 @@ public class App {
 
         for (int i = 0; i < producerCount; i++) {
             producerPool.submit(
-                    new MintRequestProducer(queue, priceFeed,
+                    new MintRequestProducer(queue, priceFeed, metrics,
                             requestsPerProducer, userPoolSize)
             );
         }
 
         for (int i = 0; i < workerCount; i++) {
-            workerPool.submit(new MintWorker(queue, mintService, metrics, stopSignal));
+            workerPool.submit(new MintWorker(queue, mintService, metrics, auditLogger, stopSignal));
         }
 
         producerPool.shutdown();
