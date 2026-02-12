@@ -11,7 +11,7 @@ public class SupplyManager {
     private int nextTokenId = 1;
     private int mintedCount = 0;
 
-    // “1인 1회” 제약
+    // “1인 1회” 제약 -> 중복 제거
     private final Set<String> mintedUsers = new HashSet<>();
 
     private final ReentrantLock lock = new ReentrantLock(true);
@@ -23,26 +23,26 @@ public class SupplyManager {
     public MintDecision tryMint(String userId) {
         lock.lock();
         try {
-            // 1) 이미 민팅한 유저인지 확인
+            // 이미 민팅한 유저인지 확인
             if (mintedUsers.contains(userId)) {
                 return MintDecision.ofDuplicateUser();
             }
 
-            // 2) 남은 수량 확인
+            // 남은 수량 확인
             if (mintedCount >= maxSupply) {
                 return MintDecision.ofSoldOut();
             }
 
-            // 3) tokenId 발급
+            // tokenId 발급
             int tokenId = nextTokenId;
 
-            // 4) mintedCount 증가
+            // mintedCount 증가
             mintedCount++;
 
             // tokenId 증가
             nextTokenId++;
 
-            // 5) 유저 기록(예약)
+            // 유저 기록(예약)
             mintedUsers.add(userId);
 
             return MintDecision.ofSuccess(tokenId);
@@ -70,7 +70,13 @@ public class SupplyManager {
         }
     }
 
-    public record MintDecision(boolean success, boolean soldOut, boolean duplicateUser, Integer tokenId) {
+    public record MintDecision(
+    		boolean success, 
+    		boolean soldOut, 
+    		boolean duplicateUser, 
+    		Integer tokenId
+    		) 
+    {
         public static MintDecision ofSuccess(int tokenId) {
             return new MintDecision(true, false, false, tokenId);
         }
@@ -81,4 +87,5 @@ public class SupplyManager {
             return new MintDecision(false, false, true, null);
         }
     }
+    
 }
